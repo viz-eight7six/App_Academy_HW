@@ -2,6 +2,8 @@ class Board
   attr_accessor :cups
 
   def initialize(name1, name2)
+    @player1 = name1
+    @player2 = name2
     @cups = Array.new(14){[]}
     place_stones
 
@@ -18,8 +20,7 @@ class Board
   def valid_move?(start_pos)
     if start_pos > 13
       raise ArgumentError.new "Invalid starting cup"
-    end
-    if start_pos < 0
+    elsif start_pos < 0
       raise ArgumentError.new "Invalid starting cup"
     end
 
@@ -27,22 +28,35 @@ class Board
   end
 
   def make_move(start_pos, current_player_name)
-    stones = @cups[start_pos].length
+    valid_move?(start_pos)
+    side = (current_player_name == @player1 ? 1 : 2)
+    stones = @cups[start_pos]
     @cups[start_pos] = []
     pos = start_pos
-    until stones == 0
-      if pos != 13
-        @cups[pos] << :stone
-        stones -= 1
-        pos += 1
+    until stones.empty?
+      pos += 1
+      pos = 0 if pos > 13
+      if pos == 6
+        @cups[pos] << stones.pop if side == 1
+      elsif pos == 13
+        @cups[pos] << stones.pop if side == 2
       else
-        pos = 0
+        @cups[pos] << stones.pop
       end
     end
+    render
+    next_turn(pos)
   end
 
   def next_turn(ending_cup_idx)
     # helper method to determine what #make_move returns
+    if ending_cup_idx == 6 || ending_cup_idx == 13
+      return :prompt
+    elsif @cups[ending_cup_idx].length == 1
+      return :switch
+    else
+      return ending_cup_idx
+    end
   end
 
   def render
@@ -60,5 +74,8 @@ class Board
   end
 
   def winner
+    return :draw if @cups[6] == @cups[13]
+    return @player1 if @cups[6].length > @cups[13].length
+    return @player2 if @cups[13].length > @cups[6].length
   end
 end
